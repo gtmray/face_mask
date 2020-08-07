@@ -3,21 +3,26 @@ from tensorflow.keras import models
 from PIL import ImageFont, ImageDraw, Image
 import numpy as np
 
-# Load the cascade
+# Load the cascade for face detection
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+
+#Face mask trained model
 model = models.load_model('model.h5')
 
 
-## Make canvas and set the color
+# Make canvas and set the color for Nepali text
 img = np.zeros((200,400,3),np.uint8)
 b,g,r,a = 0,255,0,0
 
+#Unicode font for Nepali script
 fontpath = "ArialUnicodeMS.ttf"
 font_nep = ImageFont.truetype(fontpath, 32)
 
 
-# To capture video from webcam.
+#To capture video from webcam
 cap = cv2.VideoCapture(0)
+
+#English text co-ordinates
 org = (50, 50)
 
 while True:
@@ -27,7 +32,7 @@ while True:
     # Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # Detect the faces
+    # Detect the faces co-ordinates
     faces = face_cascade.detectMultiScale(gray, 1.1, 4, minSize=(30, 30))
 
     # color in BGR
@@ -37,31 +42,35 @@ while True:
     for (x, y, w, h) in faces:
         cv2.rectangle(img, (x, y), (x + w, y + h), color, 1)
         crop_img = img[y:y+h, x:x+w]
-
-    if len(faces)!= 0:
+    
+    #Take cropped image for prediction if found
+    if len(faces)!= 0: 
         img_for_pred = crop_img
         org = (x, y - 50)
 
     else:
         img_for_pred = img
 
+    #Font
     font = cv2.FONT_HERSHEY_SIMPLEX
-
-
 
     # fontScale
     fontScale = 0.9
 
     # Line thickness of 2 px
     thickness = 2
-
+    
+    #As trained in the model
     img_size = 100
-
+    
+    #Change the input image as per model
     img_pred = cv2.resize(img_for_pred, (img_size, img_size))
     img_pred = np.reshape(img_pred, [1, img_size, img_size, 3])
-
+    
+    #Prediction
     classes = model.predict_classes(img_pred)
-
+    
+    #For Nepali script
     img_pil = Image.fromarray(img)
     draw = ImageDraw.Draw(img_pil)
     if classes == 1:
@@ -70,9 +79,12 @@ while True:
     else:
         #message = 'Sahi ho masks laaunu parxa'
         message = 'धन्यबाद मास्क लाउनुभएकोमा। '
-
+    
+    
     # cv2.putText(img, message, org, font,
     #             fontScale, color, thickness, cv2.LINE_AA)
+    
+    #Properties set for Nepali script
     draw.text(org, message, font=font_nep, fill=(b, g, r, a))
     img = np.array(img_pil)
 
